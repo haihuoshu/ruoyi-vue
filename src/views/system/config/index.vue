@@ -171,7 +171,7 @@
 </template>
 
 <script setup name="Config">
-import { listConfig, getConfig, delConfig, addConfig, updateConfig, refreshCache } from "@/api/system/config"
+import { addConfig, delConfig, getConfig, listConfig, refreshCache, updateConfig } from "@/api/system/config"
 
 const { proxy } = getCurrentInstance()
 const { sys_yes_no } = proxy.useDict("sys_yes_no")
@@ -209,7 +209,7 @@ const { queryParams, form, rules } = toRefs(data)
 function getList() {
   loading.value = true
   listConfig(proxy.addDateRange(queryParams.value, dateRange.value)).then(response => {
-    configList.value = response.rows
+    configList.value = response.data
     total.value = response.total
     loading.value = false
   })
@@ -277,13 +277,13 @@ function submitForm() {
   proxy.$refs["configRef"].validate(valid => {
     if (valid) {
       if (form.value.configId != undefined) {
-        updateConfig(form.value).then(response => {
+        updateConfig(form.value).then(() => {
           proxy.$modal.msgSuccess("修改成功")
           open.value = false
           getList()
         })
       } else {
-        addConfig(form.value).then(response => {
+        addConfig(form.value).then(() => {
           proxy.$modal.msgSuccess("新增成功")
           open.value = false
           getList()
