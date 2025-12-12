@@ -1,18 +1,18 @@
 <template>
   <div class="app-container">
     <el-form :model="queryParams" ref="queryRef" :inline="true" v-show="showSearch" label-width="68px">
-      <el-form-item label="字典名称" prop="dictName">
+      <el-form-item label="字典名称" prop="dictLabel">
         <el-input
-            v-model="queryParams.dictName"
+            v-model="queryParams.dictLabel"
             placeholder="请输入字典名称"
             clearable
             style="width: 240px"
             @keyup.enter="handleQuery"
         />
       </el-form-item>
-      <el-form-item label="字典类型" prop="dictType">
+      <el-form-item label="字典类型" prop="dictValue">
         <el-input
-            v-model="queryParams.dictType"
+            v-model="queryParams.dictValue"
             placeholder="请输入字典类型"
             clearable
             style="width: 240px"
@@ -109,11 +109,11 @@
     <el-table v-loading="loading" :data="typeList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
       <el-table-column label="字典编号" align="center" prop="dictId" />
-      <el-table-column label="字典名称" align="center" prop="dictName" :show-overflow-tooltip="true" />
+      <el-table-column label="字典名称" align="center" prop="dictLabel" :show-overflow-tooltip="true" />
       <el-table-column label="字典类型" align="center" :show-overflow-tooltip="true">
         <template #default="scope">
           <router-link :to="'/system/dict-data/index/' + scope.row.dictId" class="link-type">
-            <span>{{ scope.row.dictType }}</span>
+            <span>{{ scope.row.dictValue }}</span>
           </router-link>
         </template>
       </el-table-column>
@@ -147,11 +147,11 @@
     <!-- 添加或修改参数配置对话框 -->
     <el-dialog :title="title" v-model="open" width="500px" append-to-body>
       <el-form ref="dictRef" :model="form" :rules="rules" label-width="80px">
-        <el-form-item label="字典名称" prop="dictName">
-          <el-input v-model="form.dictName" placeholder="请输入字典名称" />
+        <el-form-item label="字典名称" prop="dictLabel">
+          <el-input v-model="form.dictLabel" placeholder="请输入字典名称" />
         </el-form-item>
-        <el-form-item label="字典类型" prop="dictType">
-          <el-input v-model="form.dictType" placeholder="请输入字典类型" />
+        <el-form-item label="字典类型" prop="dictValue">
+          <el-input v-model="form.dictValue" placeholder="请输入字典类型" />
         </el-form-item>
         <el-form-item label="状态" prop="status">
           <el-radio-group v-model="form.status">
@@ -179,7 +179,7 @@
 
 <script setup name="Dict">
 import useDictStore from '@/store/modules/dict'
-import { listType, getType, delType, addType, updateType, refreshCache } from "@/api/system/dict/type"
+import { addType, delType, getType, listType, refreshCache, updateType } from "@/api/system/dict/type"
 
 const { proxy } = getCurrentInstance()
 const { sys_normal_disable } = proxy.useDict("sys_normal_disable")
@@ -200,13 +200,13 @@ const data = reactive({
   queryParams: {
     pageNum: 1,
     pageSize: 10,
-    dictName: undefined,
-    dictType: undefined,
+    dictLabel: undefined,
+    dictValue: undefined,
     status: undefined
   },
   rules: {
-    dictName: [{ required: true, message: "字典名称不能为空", trigger: "blur" }],
-    dictType: [{ required: true, message: "字典类型不能为空", trigger: "blur" }]
+    dictLabel: [{ required: true, message: "字典名称不能为空", trigger: "blur" }],
+    dictValue: [{ required: true, message: "字典类型不能为空", trigger: "blur" }]
   },
 })
 
@@ -216,7 +216,7 @@ const { queryParams, form, rules } = toRefs(data)
 function getList() {
   loading.value = true
   listType(proxy.addDateRange(queryParams.value, dateRange.value)).then(response => {
-    typeList.value = response.rows
+    typeList.value = response.data
     total.value = response.total
     loading.value = false
   })
@@ -232,8 +232,8 @@ function cancel() {
 function reset() {
   form.value = {
     dictId: undefined,
-    dictName: undefined,
-    dictType: undefined,
+    dictLabel: undefined,
+    dictValue: undefined,
     status: "0",
     remark: undefined
   }
@@ -283,13 +283,13 @@ function submitForm() {
   proxy.$refs["dictRef"].validate(valid => {
     if (valid) {
       if (form.value.dictId != undefined) {
-        updateType(form.value).then(response => {
+        updateType(form.value).then(() => {
           proxy.$modal.msgSuccess("修改成功")
           open.value = false
           getList()
         })
       } else {
-        addType(form.value).then(response => {
+        addType(form.value).then(() => {
           proxy.$modal.msgSuccess("新增成功")
           open.value = false
           getList()

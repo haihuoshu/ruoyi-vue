@@ -6,8 +6,8 @@
           <el-option
               v-for="item in typeOptions"
               :key="item.dictId"
-              :label="item.dictName"
-              :value="item.dictType"
+              :label="item.dictLabel"
+              :value="item.dictValue"
           />
         </el-select>
       </el-form-item>
@@ -93,7 +93,7 @@
 
     <el-table v-loading="loading" :data="dataList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
-      <el-table-column label="字典编码" align="center" prop="dictCode" />
+      <el-table-column label="字典编码" align="center" prop="dictId" />
       <el-table-column label="字典标签" align="center" prop="dictLabel">
         <template #default="scope">
           <span v-if="(scope.row.listClass == '' || scope.row.listClass == 'default') && (scope.row.cssClass == '' || scope.row.cssClass == null)">{{ scope.row.dictLabel }}</span>
@@ -183,8 +183,8 @@
 
 <script setup name="Data">
 import useDictStore from '@/store/modules/dict'
-import { optionselect as getDictOptionselect, getType } from "@/api/system/dict/type"
-import { listData, getData, delData, addData, updateData } from "@/api/system/dict/data"
+import { getType, optionselect as getDictOptionselect } from "@/api/system/dict/type"
+import { addData, delData, getData, listData, updateData } from "@/api/system/dict/data"
 
 const { proxy } = getCurrentInstance()
 const { sys_normal_disable } = proxy.useDict("sys_normal_disable")
@@ -232,8 +232,8 @@ const { queryParams, form, rules } = toRefs(data)
 /** 查询字典类型详细 */
 function getTypes(dictId) {
   getType(dictId).then(response => {
-    queryParams.value.dictType = response.data.dictType
-    defaultDictType.value = response.data.dictType
+    queryParams.value.dictType = response.data.dictValue
+    defaultDictType.value = response.data.dictValue
     getList()
   })
 }
@@ -249,7 +249,7 @@ function getTypeList() {
 function getList() {
   loading.value = true
   listData(queryParams.value).then(response => {
-    dataList.value = response.rows
+    dataList.value = response.data
     total.value = response.total
     loading.value = false
   })
@@ -264,7 +264,7 @@ function cancel() {
 /** 表单重置 */
 function reset() {
   form.value = {
-    dictCode: undefined,
+    dictId: undefined,
     dictLabel: undefined,
     dictValue: undefined,
     cssClass: undefined,
@@ -305,7 +305,7 @@ function handleAdd() {
 
 /** 多选框选中数据 */
 function handleSelectionChange(selection) {
-  ids.value = selection.map(item => item.dictCode)
+  ids.value = selection.map(item => item.dictId)
   single.value = selection.length != 1
   multiple.value = !selection.length
 }
@@ -313,8 +313,8 @@ function handleSelectionChange(selection) {
 /** 修改按钮操作 */
 function handleUpdate(row) {
   reset()
-  const dictCode = row.dictCode || ids.value
-  getData(dictCode).then(response => {
+  const dictId = row.dictId || ids.value
+  getData(dictId).then(response => {
     form.value = response.data
     open.value = true
     title.value = "修改字典数据"
@@ -325,15 +325,15 @@ function handleUpdate(row) {
 function submitForm() {
   proxy.$refs["dataRef"].validate(valid => {
     if (valid) {
-      if (form.value.dictCode != undefined) {
-        updateData(form.value).then(response => {
+      if (form.value.dictId != undefined) {
+        updateData(form.value).then(() => {
           useDictStore().removeDict(queryParams.value.dictType)
           proxy.$modal.msgSuccess("修改成功")
           open.value = false
           getList()
         })
       } else {
-        addData(form.value).then(response => {
+        addData(form.value).then(() => {
           useDictStore().removeDict(queryParams.value.dictType)
           proxy.$modal.msgSuccess("新增成功")
           open.value = false
@@ -346,9 +346,9 @@ function submitForm() {
 
 /** 删除按钮操作 */
 function handleDelete(row) {
-  const dictCodes = row.dictCode || ids.value
-  proxy.$modal.confirm('是否确认删除字典编码为"' + dictCodes + '"的数据项？').then(function () {
-    return delData(dictCodes)
+  const dictIds = row.dictId || ids.value
+  proxy.$modal.confirm('是否确认删除字典编码为"' + dictIds + '"的数据项？').then(function () {
+    return delData(dictIds)
   }).then(() => {
     getList()
     proxy.$modal.msgSuccess("删除成功")
