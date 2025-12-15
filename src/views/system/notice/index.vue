@@ -163,7 +163,7 @@
 </template>
 
 <script setup name="Notice">
-import { listNotice, getNotice, delNotice, addNotice, updateNotice } from "@/api/system/notice"
+import { addNotice, delNotice, getNotice, listNotice, updateNotice } from "@/api/system/notice"
 
 const { proxy } = getCurrentInstance()
 const { sys_notice_status, sys_notice_type } = proxy.useDict("sys_notice_status", "sys_notice_type")
@@ -199,7 +199,7 @@ const { queryParams, form, rules } = toRefs(data)
 function getList() {
   loading.value = true
   listNotice(queryParams.value).then(response => {
-    noticeList.value = response.rows
+    noticeList.value = response.data
     total.value = response.total
     loading.value = false
   })
@@ -265,13 +265,13 @@ function submitForm() {
   proxy.$refs["noticeRef"].validate(valid => {
     if (valid) {
       if (form.value.noticeId != undefined) {
-        updateNotice(form.value).then(response => {
+        updateNotice(form.value).then(() => {
           proxy.$modal.msgSuccess("修改成功")
           open.value = false
           getList()
         })
       } else {
-        addNotice(form.value).then(response => {
+        addNotice(form.value).then(() => {
           proxy.$modal.msgSuccess("新增成功")
           open.value = false
           getList()
